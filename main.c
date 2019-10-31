@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define TAMREGISTRO 85
 
 typedef enum { false = 0, true} bool;
 
@@ -128,16 +129,62 @@ int CsvtoBin(FILE *csv,FILE *bin){
     /*Abertura e fechamento de arquivo nao vao ser feitas aqui*/
     return 0;
 }
+
+void print_reg(char c, FILE *file)
+{
+    c = '\0';
+    int rrn = 2;
+    fseek(file, rrn*TAMREGISTRO, SEEK_SET);
+    do
+    {
+        fread(&c, sizeof(char), 1, file); /* le chars ate encontrar um # */
+        if (c == '|'){ // quando le o pipe coloca espaço
+            c = ' ';
+        }
+        if (c == '#'){ // quando começa a ler lixo vai pro proximo registro
+            rrn = rrn+1;
+            printf("\n");
+            fseek(file, rrn*TAMREGISTRO, SEEK_SET);
+            c = '\0';
+        }
+        printf("%c", c);
+    } while (rrn != 9); // tem que arrumar essa condição
+    
+}
+
 int main()
 {
     FILE *csv;
     FILE *bin;
-    bin = fopen("arquivoGerado.bin","ab");
-    csv = fopen("conjuntoDados.csv","rb");
-    CsvtoBin(csv,bin);
-    fclose(csv);
-    fclose(bin);
-    binarioNaTela1("arquivoGerado.bin");
+    int opt;
+    scanf("%d", &opt);  /* Digita o número da opção a ser considerada */
+    switch (opt){
+    case 1:
+        bin = fopen("arquivoGerado.bin","ab");
+        csv = fopen("conjuntoDados.csv","rb");
+        CsvtoBin(csv,bin);
+        fclose(csv);
+        fclose(bin);
+        binarioNaTela1("arquivoGerado.bin");
+        break;
+    case 2:
+        bin = fopen("arquivoGerado.bin","rb");
+        print_reg(0,bin);
+        break;
+    case 3:
+        break;
+    case 4:
+        break;
+    case 5:
+        break;
+    case 6:
+        break;
+    case 7:
+        break;
+    case 8:
+        break;
+    }
+
     return 0;
 }
 
