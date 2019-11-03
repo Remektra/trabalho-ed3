@@ -141,7 +141,7 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe){
     return 0;
 }
 
-void print_reg(char* nome_arq){
+int print_reg(char* nome_arq){
     FILE *file;
     file = fopen(nome_arq,"rb"); // abre o arquivo gerado para leitura
     if(!file){
@@ -154,7 +154,7 @@ void print_reg(char* nome_arq){
     int contador = 0;
     int rrn = 0;
     fseek(file, (rrn*TAMREGISTRO)+19, SEEK_SET);//Pular o cabeçalho
-    while(contador < 10){
+    while(!feof(file)){
         registro.estadoOrigem[2] = registro.estadoDestino[2] = '\0';
         fread(registro.estadoOrigem,2,1,file);
         fread(registro.estadoDestino,2,1,file);
@@ -168,5 +168,5 @@ void print_reg(char* nome_arq){
         fseek(file,(rrn*TAMREGISTRO)+19,SEEK_SET);
         printf("%s %s %d %s %s %s \n",registro.estadoOrigem,registro.estadoDestino,registro.distancia,registro.cidadeOrigem,registro.cidadeDestino,registro.tempoViagem);
     }
-    
+    return 0;
 }
