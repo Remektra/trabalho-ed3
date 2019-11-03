@@ -48,8 +48,16 @@ void lerAtePipe(char *campo,FILE *file){
 int CsvtoBin(char* nome_arq_csv,char* nomeArqGe){
     FILE* csv;
     FILE* bin;
-    csv = fopen("conjuntoDados.csv","rb");
-    bin = fopen("arquivoGeradoooo.bin","wb");
+    csv = fopen(nome_arq_csv,"rb"); // abre o arquivo csv
+    bin = fopen(nomeArqGe,"wb"); // cria o arquivo binário 
+    if(!csv){
+        printf("Falha no carregamento do arquivo.");
+        return ERRO; // caso tenha ocorrido algum erro com o arquivo, retorna 0 
+    }
+    if(!bin){
+        printf("Falha no carregamento do arquivo.");
+        return ERRO; // caso tenha ocorrido algum erro com o arquivo, retorna 0
+    }
     struct Cabecalho cabecalho;
     struct Dados dado;
     //Dados para criar o cabecalho
@@ -68,13 +76,26 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe){
     char lixo = '#';
     char limpalinha[100];
     int a,b,c;
+    char aux;
+    int cntaux;
     dado.distancia = -1;//Esta linha e a de baixo servem para tratar os casos onde a leitura seja nula ja que iniciamos o campo com um valor conhecido
     dado.estadoDestino[0] = dado.estadoOrigem[0] = dado.cidadeDestino[0] = dado.cidadeOrigem[0] = dado.tempoViagem[0] = '\0';
     //tratar a primeira linha
     fscanf(csv,"%[^\n]%*c%*c",limpalinha);
     while(cabecalho.numeroArestas < 10){
-        fscanf(csv,"%[^,]%*c %[^,]%*c %d%*c %[^,]%*c %[^,]%*c %[^\n]%*c",dado.estadoOrigem,dado.estadoDestino,&dado.distancia,dado.cidadeOrigem,dado.cidadeDestino,dado.tempoViagem);
-        //tratamento de nulos OBS: nulo do int ja tratado ao startar a variavel com -1
+        cntaux = 0;
+        fscanf(csv,"%[^,]%*c %[^,]%*c %d%*c %[^,]%*c %[^,]%*c",dado.estadoOrigem,dado.estadoDestino,&dado.distancia,dado.cidadeOrigem,dado.cidadeDestino);
+        fscanf(csv,"%c",&aux);
+        if(aux == '\n'){
+            dado.tempoViagem[0] = '\0';
+        }else{
+            while (aux != '\n'){
+                dado.tempoViagem[cntaux]= aux;
+                fscanf(csv,"%c",&aux);
+                cntaux++;
+            }
+            dado.tempoViagem[cntaux]='\0';
+        }
         printf(" %s %s %d %s %s %s \n",dado.estadoOrigem,dado.estadoDestino,dado.distancia,dado.cidadeOrigem,dado.cidadeDestino,dado.tempoViagem);
         if(dado.estadoDestino[0] == '\0'){
             dado.estadoDestino[1] = '#';
@@ -122,7 +143,11 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe){
 
 void print_reg(char* nome_arq){
     FILE *file;
-    file = fopen(nome_arq,"rb");
+    file = fopen(nome_arq,"rb"); // abre o arquivo gerado para leitura
+    if(!file){
+        printf("Falha no carregamento do arquivo.");
+        return ERRO; // caso tenha ocorrido algum erro com o arquivo, retorna 0 
+    }
     struct Dados registro;
     struct Cabecalho cab;
     char c;

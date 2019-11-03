@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define ERRO 0
+#define OK   1
 #define TAMREGISTRO 85
 
 
@@ -33,7 +35,7 @@ struct No{// Ao ler os dados estes serão colocados em uma lista encadeada
     struct Dados *prox;
 };
 
-int CsvtoBin(char*,char*);
-void binarioNaTela1(char*);
-void lerAtePipe(char*,FILE*);
-void print_reg(char*);
+int CsvtoBin(char*,char*); // Função que lê do arquivo CSV e gera um arquivo binário
+void binarioNaTela1(char*); 
+void lerAtePipe(char*,FILE*); // Função responsável por ler ate o delimitador de tamanho do campo
+void print_reg(char*); // Função responsável por ler e exibir todos os registros presentes no arquivo binário 
