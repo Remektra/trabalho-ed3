@@ -36,8 +36,21 @@ void binarioNaTela1(char *nomeArquivoBinario) {
 	free(mb);
 	fclose(fs);
 }
+void lerAtePipe(char *campo,FILE *file){
+    char c;
+    int contador = 0;
+    fread(&c,1,1,file);
+    while(c != '|'){
+        campo[contador] = c;
+        contador ++;
+        fread(&c,1,1,file);
+    }
+    campo[contador] = '\0';
+
+}
 
 int CsvtoBin(FILE *csv,FILE *bin){
+    bin = fopen("arquivoGeradoooo.bin","wb");
     struct Cabecalho cabecalho;
     struct Dados dado;
     //Dados para criar o cabecalho
@@ -58,22 +71,18 @@ int CsvtoBin(FILE *csv,FILE *bin){
     int a,b,c;
     dado.distancia = -1;//Esta linha e a de baixo servem para tratar os casos onde a leitura seja nula ja que iniciamos o campo com um valor conhecido
     dado.estadoDestino[0] = dado.estadoOrigem[0] = dado.cidadeDestino[0] = dado.cidadeOrigem[0] = dado.tempoViagem[0] = '\0';
-
-    //Abertura do arquivo binario
-
-    bin = fopen("arquivoGerado.bin","wb"); 
     //tratar a primeira linha
-    fscanf(csv,"%[^\n]",limpalinha);
-    while(!feof(csv)){
-        fscanf(csv,"%[^,]%*c %[^,]%*c %d%*c %[^,]%*c %[^,]%*c %[^\n]",dado.estadoOrigem,dado.estadoDestino,&dado.distancia,dado.cidadeOrigem,dado.cidadeDestino,dado.tempoViagem);
+    fscanf(csv,"%[^\n]%*c%*c",limpalinha);
+    while(cabecalho.numeroArestas < 10){
+        fscanf(csv,"%[^,]%*c %[^,]%*c %d%*c %[^,]%*c %[^,]%*c %[^\n]%*c",dado.estadoOrigem,dado.estadoDestino,&dado.distancia,dado.cidadeOrigem,dado.cidadeDestino,dado.tempoViagem);
         //tratamento de nulos OBS: nulo do int ja tratado ao startar a variavel com -1
+        printf(" %s %s %d %s %s %s \n",dado.estadoOrigem,dado.estadoDestino,dado.distancia,dado.cidadeOrigem,dado.cidadeDestino,dado.tempoViagem);
         if(dado.estadoDestino[0] == '\0'){
             dado.estadoDestino[1] = '#';
         }
         if(dado.estadoOrigem[0]== '\0'){
             dado.estadoOrigem[1] = '#';  
         }
-        
         //escrita dos campos de tamanho fixo
         fwrite(dado.estadoOrigem,2,1,bin);//escreve os dois primeiros bytes de dado.estado origem arquivo binario
         fwrite(dado.estadoDestino,2,1,bin);
@@ -101,58 +110,67 @@ int CsvtoBin(FILE *csv,FILE *bin){
     /*Atualizar o Cabecalho*/
     fseek(bin,0,SEEK_SET);
     cabecalho.status = '1';
-
     fwrite(&cabecalho.status,1,1,bin);
     fwrite(&cabecalho.numeroVertices,sizeof(int),1,bin);
+    printf("TA FAZENDO ISSo");
     fwrite(&cabecalho.numeroArestas,sizeof(int),1,bin);
     fwrite(cabecalho.dataUltimaCompactacao,10,1,bin);
+    fclose(bin);
     /*Abertura e fechamento de arquivo nao vao ser feitas aqui*/
     return 0;
 }
 
-void print_reg(char c, FILE *file)
-{
-    c = '\0';
+void print_reg(FILE *file){
+    struct Dados registro;
+    struct Cabecalho cab;
+    char c;
+    int contador = 0;
     int rrn = 0;
-    fseek(file, rrn*TAMREGISTRO, SEEK_SET);
-    do
-    {
-        fread(&c, sizeof(char), 1, file); /* le chars ate encontrar um # */
-        if (c == '|'){ // quando le o pipe coloca espaço
-            c = ' ';
-        }
-        if (c == '#'){ // quando começa a ler lixo vai pro proximo registro
-            rrn = rrn+1;
-            printf("\n");
-            fseek(file, rrn*TAMREGISTRO, SEEK_SET);
-            c = '\0';
-        }
-        printf("%c", c);
-    } while (rrn != 9); // tem que arrumar essa condição
+    fseek(file, (rrn*TAMREGISTRO)+19, SEEK_SET);//Pular o cabeçalho
+    while(contador < 10){
+        registro.estadoOrigem[2] = registro.estadoDestino[2] = '\0';
+        fread(registro.estadoOrigem,2,1,file);
+        fread(registro.estadoDestino,2,1,file);
+        fread(&registro.distancia,4,1,file);
+        //Campos de tamanhoVariavel ------>Ler ate o delimitador char a char
+        lerAtePipe(registro.cidadeOrigem,file);
+        lerAtePipe(registro.cidadeDestino,file);
+        lerAtePipe(registro.tempoViagem,file);
+        rrn++;
+        contador++;
+        fseek(file,(rrn*TAMREGISTRO)+19,SEEK_SET);
+        printf("%s %s %d %s %s %s \n",registro.estadoOrigem,registro.estadoDestino,registro.distancia,registro.cidadeOrigem,registro.cidadeDestino,registro.tempoViagem);
+    }
     
 }
 
-int main()
-{
+int main(){
     FILE *csv;
     FILE *bin;
     int opt;
-    char nomeArqGer[100];
-    // mudar isso depois
-    scanf("%d %s", &opt,nomeArqGer);  /* Digita o número da opção a ser considerada */
+    char nomeArqGer[50];
+    char nome_arq_csv[50];
+    scanf("%d", &opt);  /* Digita o número da opção a ser considerada */
 
     switch (opt){
     case 1:
+        // scanf("%s",nome_arq_csv);
+        // scanf("%s",nomeArqGer);        
         bin = fopen("arquivoGerado.bin","ab");
         csv = fopen("conjuntoDados.csv","rb");
         CsvtoBin(csv,bin);
         fclose(csv);
         fclose(bin);
+        // CsvtoBin(nome_arq_csv,nomeArqGer);
         binarioNaTela1("arquivoGerado.bin");
         break;
     case 2:
-        bin = fopen(nomeArqGer,"rb");
-        print_reg(0,bin);
+        //scanf("%s",nomeArqGer);
+        //bin = fopen(nomeArqGer,"rb");
+        // print_reg(nomeArqGer);
+        bin = fopen("arquivoGerado.bin","rb");
+
+        print_reg(bin);
         break;
     case 3:
         break;
