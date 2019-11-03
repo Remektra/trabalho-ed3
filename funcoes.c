@@ -81,8 +81,8 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe){
     dado.distancia = -1;//Esta linha e a de baixo servem para tratar os casos onde a leitura seja nula ja que iniciamos o campo com um valor conhecido
     dado.estadoDestino[0] = dado.estadoOrigem[0] = dado.cidadeDestino[0] = dado.cidadeOrigem[0] = dado.tempoViagem[0] = '\0';
     //tratar a primeira linha
-    fscanf(csv,"%[^\n]%*c%*c",limpalinha);
-    while(cabecalho.numeroArestas < 10){
+    fscanf(csv,"%[^\n]%*c",limpalinha);
+    while(!feof(csv)){
         cntaux = 0;
         fscanf(csv,"%[^,]%*c %[^,]%*c %d%*c %[^,]%*c %[^,]%*c",dado.estadoOrigem,dado.estadoDestino,&dado.distancia,dado.cidadeOrigem,dado.cidadeDestino);
         fscanf(csv,"%c",&aux);
@@ -96,7 +96,6 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe){
             }
             dado.tempoViagem[cntaux]='\0';
         }
-        printf(" %s %s %d %s %s %s \n",dado.estadoOrigem,dado.estadoDestino,dado.distancia,dado.cidadeOrigem,dado.cidadeDestino,dado.tempoViagem);
         if(dado.estadoDestino[0] == '\0'){
             dado.estadoDestino[1] = '#';
         }
@@ -153,8 +152,14 @@ int print_reg(char* nome_arq){
     char c;
     int contador = 0;
     int rrn = 0;
+    fseek(file,5,SEEK_SET);
+    int numeroReg;
+
+    fseek(file,5,SEEK_SET);
+    fread(&numeroReg,4,1,file);
+
     fseek(file, (rrn*TAMREGISTRO)+19, SEEK_SET);//Pular o cabeçalho
-    while(!feof(file)){
+    while(contador < numeroReg-1){
         registro.estadoOrigem[2] = registro.estadoDestino[2] = '\0';
         fread(registro.estadoOrigem,2,1,file);
         fread(registro.estadoDestino,2,1,file);
@@ -168,5 +173,6 @@ int print_reg(char* nome_arq){
         fseek(file,(rrn*TAMREGISTRO)+19,SEEK_SET);
         printf("%s %s %d %s %s %s \n",registro.estadoOrigem,registro.estadoDestino,registro.distancia,registro.cidadeOrigem,registro.cidadeDestino,registro.tempoViagem);
     }
-    return 0;
+    
+
 }

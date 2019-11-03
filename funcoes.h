@@ -7,7 +7,6 @@
 
 #define ERRO 0
 #define OK   1
-
 #define TAMREGISTRO 85
 
 
