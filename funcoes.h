@@ -7,6 +7,7 @@
 
 #define TAMREGISTRO 85
 
+
 typedef enum { false = 0, true} bool;
 
 struct Cabecalho{
@@ -31,3 +32,8 @@ struct No{// Ao ler os dados estes serão colocados em uma lista encadeada
     struct Dados dados;
     struct Dados *prox;
 };
+
+int CsvtoBin(char*,char*);
+void binarioNaTela1(char*);
+void lerAtePipe(char*,FILE*);
+void print_reg(char*);
