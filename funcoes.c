@@ -172,7 +172,7 @@ int print_reg(char* nome_arq){
         rrn++;
         contador++;
         fseek(file,(rrn*TAMREGISTRO)+19,SEEK_SET);
-        printf("%s %s %d %s %s %s \n",registro.estadoOrigem,registro.estadoDestino,registro.distancia,registro.cidadeOrigem,registro.cidadeDestino,registro.tempoViagem);
+        printf("%d %s %s %d %s %s %s \n",contador,registro.estadoOrigem,registro.estadoDestino,registro.distancia,registro.cidadeOrigem,registro.cidadeDestino,registro.tempoViagem);
     }
     
 
