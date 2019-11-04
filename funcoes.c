@@ -76,14 +76,14 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe){
     char lixo = '#';
     char limpalinha[100];
     int a,b,c;
-    char aux,letra;
+    char aux;
     int cntaux;
     dado.distancia = -1;//Esta linha e a de baixo servem para tratar os casos onde a leitura seja nula ja que iniciamos o campo com um valor conhecido
     dado.estadoDestino[0] = dado.estadoOrigem[0] = dado.cidadeDestino[0] = dado.cidadeOrigem[0] = dado.tempoViagem[0] = '\0';
     //tratar a primeira linha
     fscanf(csv,"%[^\n]%*c",limpalinha);
     
-    while((letra = fgetc(csv)) != EOF){
+    while(!feof(csv)){
         cntaux = 0;
         fscanf(csv,"%[^,]%*c %[^,]%*c %d%*c %[^,]%*c %[^,]%*c",dado.estadoOrigem,dado.estadoDestino,&dado.distancia,dado.cidadeOrigem,dado.cidadeDestino);
         fscanf(csv,"%c",&aux);
