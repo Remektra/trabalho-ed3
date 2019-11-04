@@ -45,7 +45,7 @@ void lerAtePipe(char *campo,FILE *file){
 
 }
 
-int CsvtoBin(char* nome_arq_csv,char* nomeArqGe){
+int CsvtoBin(char* nome_arq_csv,char* nomeArqGe, struct NoCidades **inicio){
     FILE* csv;
     FILE* bin;
     csv = fopen(nome_arq_csv,"rb"); // abre o arquivo csv
@@ -112,7 +112,7 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe){
 
         /*Não se realizou o tratamento de truncamento pq na especificação do trabalho foi 
           dito que não era necessário pois o arquivo de dados garantia regularidade */
-
+        
         a = strlen(dado.cidadeOrigem);
         b = strlen(dado.cidadeDestino);
         c = strlen(dado.tempoViagem);
@@ -125,6 +125,13 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe){
         for(int i = 0; i < 77 - (a+b+c+3);i++){//escreve lixo no resto dos espaços livres
             fwrite(&lixo,1,1,bin);
         }
+        if(!buscaCidade(dado.cidadeOrigem,*inicio)){
+            cabecalho.numeroVertices = insereCidade(dado.cidadeOrigem,inicio);
+            printf("%d",cabecalho.numeroVertices);
+        }
+        if(!buscaCidade(dado.cidadeDestino,*inicio)){
+            cabecalho.numeroVertices = insereCidade(dado.cidadeDestino,inicio);
+        }
        cabecalho.numeroArestas++;
     }
     /*Atualizar o Cabecalho*/
@@ -132,21 +139,27 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe){
     cabecalho.status = '1';
     fwrite(&cabecalho.status,1,1,bin);
     fwrite(&cabecalho.numeroVertices,sizeof(int),1,bin);
-    printf("TA FAZENDO ISSo");
     fwrite(&cabecalho.numeroArestas,sizeof(int),1,bin);
     fwrite(cabecalho.dataUltimaCompactacao,10,1,bin);
     fclose(bin);
     fclose(csv);
-    
     return 0;
+    binarioNaTela1(nomeArqGe);
+    
 }
 
 int print_reg(char* nome_arq){
     FILE *file;
     file = fopen(nome_arq,"rb"); // abre o arquivo gerado para leitura
     if(!file){
-        printf("Falha no carregamento do arquivo.");
+        printf("Falha no processamento do arquivo.");
         return ERRO; // caso tenha ocorrido algum erro com o arquivo, retorna 0 
+    }
+    char letra;
+    fread(&letra,1,1,file);
+    if(letra == '0'){
+        printf("Falha no processamento do arquivo.");
+        return ERRO;
     }
     struct Dados registro;
     struct Cabecalho cab;
@@ -160,7 +173,7 @@ int print_reg(char* nome_arq){
     fread(&numeroReg,4,1,file);
 
     fseek(file, (rrn*TAMREGISTRO)+19, SEEK_SET);//Pular o cabeçalho
-    while(contador < numeroReg-1){
+    while(contador < numeroReg){
         registro.estadoOrigem[2] = registro.estadoDestino[2] = '\0';
         fread(registro.estadoOrigem,2,1,file);
         fread(registro.estadoDestino,2,1,file);
@@ -172,8 +185,80 @@ int print_reg(char* nome_arq){
         rrn++;
         contador++;
         fseek(file,(rrn*TAMREGISTRO)+19,SEEK_SET);
-        printf("%d %s %s %d %s %s %s \n",contador,registro.estadoOrigem,registro.estadoDestino,registro.distancia,registro.cidadeOrigem,registro.cidadeDestino,registro.tempoViagem);
+        printf("%d %s %s %d %s %s %s \n",contador-1,registro.estadoOrigem,registro.estadoDestino,registro.distancia,registro.cidadeOrigem,registro.cidadeDestino,registro.tempoViagem);
     }
+    return 1;
+}
+int buscaCidade(char *cidade,struct NoCidades *inicio){
+    if(inicio == NULL){
+        return 0;
+    }
+    while(inicio != NULL){
+        if(!strcmp(inicio->cidade,cidade)){
+            return 1;
+        }
+        inicio = inicio->prox;
+    }
+    return 0;
     
-
+}
+int insereCidade(char *cidade,struct NoCidades **inicio){
+    struct NoCidades *aux = *(inicio);
+    struct NoCidades *elem = calloc(1,sizeof(struct NoCidades));
+    int contador = 2;
+    strcpy(elem->cidade,cidade);
+    elem->prox == NULL;
+    if(cidade == NULL){
+        return 0;
+    }
+    if(aux == NULL){
+       *inicio = elem;
+       return 1; 
+    }
+    while(aux->prox != NULL){
+        aux = aux->prox;
+        contador++;
+    }
+    aux->prox = elem;
+    return contador;
+}
+void printaCabecalho(){
+    FILE *file = fopen("arquivoGerado.bin","rb");
+    char a;
+    int b;
+    int c;
+    char d[11];
+    fread(&a,1,1,file);
+    fread(&b,4,1,file);
+    fread(&c,4,1,file);
+    fread(&d,10,1,file);
+    d[10] = '\0';
+    printf("\n %c %d %d %s \n",a,b,c,d);
+    fclose(file);
+}
+struct Dados buscaPorRRN(char *nomeArquivo,int RRN){
+    FILE *file;
+    int numreg;
+    struct Dados resultado;
+    file = fopen(nomeArquivo,"rb");
+    fseek(file,5,SEEK_SET);
+    fread(&numreg,4,1,file);
+    resultado.distancia = -1;
+    if(RRN > numreg-1){
+        fclose(file);
+        return resultado;
+    }
+    fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
+    fread(resultado.estadoOrigem,2,1,file);
+    fread(resultado.estadoDestino,2,1,file);
+    resultado.estadoOrigem[2] = resultado.estadoDestino[2] = '\0';
+    fread(&resultado.distancia,4,1,file);
+    lerAtePipe(resultado.cidadeOrigem,file);
+    lerAtePipe(resultado.cidadeDestino,file);
+    lerAtePipe(resultado.tempoViagem,file);
+    fclose(file);
+    return resultado;
+}
+void printaRegistro(struct Dados r){
+    printf("%s %s %d %s %s %s",r.estadoOrigem,r.estadoDestino,r.distancia,r.cidadeOrigem,r.cidadeDestino,r.tempoViagem);
 }

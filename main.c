@@ -8,28 +8,35 @@
 #include "funcoes.h"
 
 int main(){
+    struct NoCidades *inicio = NULL;
+    struct Dados aux;
     int opt;
     char nomeArqGer[50];
     char nome_arq_csv[50];
+    int RRN;
     scanf("%d", &opt);  /* Digita o número da opção a ser considerada */
 
     switch (opt){
     case 1:
         scanf("%s",nome_arq_csv);
         scanf("%s",nomeArqGer);        
-        CsvtoBin(nome_arq_csv,nomeArqGer);
-        binarioNaTela1("arquivoGerado.bin");
-        //CsvtoBin(csv,bin);
+        CsvtoBin(nome_arq_csv,nomeArqGer,&inicio);
         break;
     case 2:
         scanf("%s",nomeArqGer);
         print_reg(nomeArqGer);
-        //bin = fopen("arquivoGerado.bin","rb");
-        //print_reg(bin);
         break;
     case 3:
         break;
     case 4:
+        scanf("%s",nomeArqGer);
+        scanf("%d",&RRN); 
+        aux = buscaPorRRN(nomeArqGer,RRN);
+        if(aux.distancia < 0){
+            printf("Registro inexistente.");
+        }else{
+            printaRegistro(aux);
+        }
         break;
     case 5:
         break;

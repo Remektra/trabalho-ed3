@@ -30,12 +30,16 @@ struct Dados{
     char cidadeDestino[100]; // tamanho variavel, delimitador entre campos pipe "|".
     char tempoViagem[100]; // tamanho variavel, delimitador entre campos pipe "|".
 };
-struct No{// Ao ler os dados estes serão colocados em uma lista encadeada
-    struct Dados dados;
-    struct Dados *prox;
+struct  NoCidades{
+    char cidade[100];
+    struct NoCidades *prox;
 };
-
-int CsvtoBin(char*,char*); // Função que lê do arquivo CSV e gera um arquivo binário
+int buscaCidade(char *cidade,struct NoCidades *inicio);//retorna 0 se nao achou e 1 se achou
+int insereCidade(char *cidade,struct NoCidades **inicio);//retorna o tamanho da lista ou zero se nao foi possivel inserir
+int CsvtoBin(char*,char*,struct NoCidades **inicio); // Função que lê do arquivo CSV e gera um arquivo binário
 void binarioNaTela1(char*); 
 void lerAtePipe(char*,FILE*); // Função responsável por ler ate o delimitador de tamanho do campo
 int print_reg(char*); // Função responsável por ler e exibir todos os registros presentes no arquivo binário 
+void printaCabecalho();//Apenas para testes
+struct Dados buscaPorRRN(char *nomeArquivo,int RRN);//retorna o registro ou distancia negativa se nao foi encontrado
+void printaRegistro(struct Dados registro);
