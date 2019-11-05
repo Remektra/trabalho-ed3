@@ -16,7 +16,9 @@ int main(){
     char valor[50] = "";
     int distancia = -1;
     int loop_fun_5 = 0;
-    int check = 1;
+    int loop_fun_6 = 0;
+    int check5 = 1;
+    int check6 = 1;
     char nome_arq_csv[50];
     int RRN;
     scanf("%d", &opt);  /* Digita o número da opção a ser considerada */
@@ -66,15 +68,34 @@ int main(){
                 scan_quote_string(valor);
                 //printf("%s",valor);
             }
-            check = procuraRegistro(nomeCampo,nomeArqGer,valor,distancia,0);
+            check5 = procuraRegistro(nomeCampo,nomeArqGer,valor,distancia,0);
             loop_fun_5--;
         }
-        if(check != 0 && loop_fun_5 == 0){
+        if(check5 != 0 && loop_fun_5 == 0){
             binarioNaTela1(nomeArqGer);
         }
         break;
     case 6:
     //preencher uma struct dados com os dados lidos do teclado e enviar para a função adiciona registro
+        scanf("%s",nomeArqGer);
+        scanf("%d",&loop_fun_6);
+        while (loop_fun_6!=0)
+        {
+            scan_quote_string(aux.estadoOrigem);
+            //printf("%s",aux.estadoOrigem);
+            scan_quote_string(aux.estadoOrigem);
+            scanf("%d",&distancia);
+            scan_quote_string(aux.cidadeOrigem);
+            //printf("%s",aux.cidadeOrigem);
+            scan_quote_string(aux.cidadeDestino);
+            scan_quote_string(aux.tempoViagem);
+            adicionaRegistro(aux,nomeArqGer);
+
+            loop_fun_6--;
+        }
+        if(check6 != 0 && loop_fun_6 == 0){
+            binarioNaTela1(nomeArqGer);
+        }
         break;
     case 7:
         break;

@@ -97,7 +97,7 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe, struct NoCidades **inicio){
     struct Cabecalho cabecalho;
     struct Dados dado;
     //Dados para criar o cabecalho
-    strcpy(cabecalho.dataUltimaCompactacao,"00/00/0000");   
+    strcpy(cabecalho.dataUltimaCompactacao,"##/##/####");   
     cabecalho.numeroArestas = 0;
     cabecalho.numeroVertices = 0;
     cabecalho.status = '0';
@@ -431,6 +431,10 @@ int procuraRegistro(char *campo,char *nomeArq,char *valor, int dist,int opr){
 int adicionaRegistro(struct Dados dado,char *nomeArq){
     FILE *file;
     file = fopen(nomeArq,"wb");
+    if(!file){
+        printf("Falha no processamento do arquivo.");
+        return ERRO;
+    }
     char abriu = '0';
     char fechou = '1';
     char delimitador = '|';
@@ -453,6 +457,7 @@ int adicionaRegistro(struct Dados dado,char *nomeArq){
     fseek(file,0,SEEK_SET);
     fwrite(&fechou,1,1,file);
     fclose(file);
+    return 1;
 }
 /*To do List
 
