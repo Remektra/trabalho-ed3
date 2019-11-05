@@ -12,6 +12,11 @@ int main(){
     struct Dados aux;
     int opt;
     char nomeArqGer[50];
+    char nomeCampo[50];
+    char valor[50] = "";
+    int distancia = -1;
+    int loop_fun_5 = 0;
+    int check = 1;
     char nome_arq_csv[50];
     int RRN;
     scanf("%d", &opt);  /* Digita o número da opção a ser considerada */
@@ -27,6 +32,15 @@ int main(){
         print_reg(nomeArqGer);
         break;
     case 3:
+        scanf("%s",nomeArqGer);
+        scanf("%s",nomeCampo);
+        if(!strcmp(nomeCampo,"distancia")){
+            scanf("%d",&distancia);
+        }else{
+            scan_quote_string(valor);
+            //printf("%s",valor);
+        }
+        procuraRegistro(nomeCampo,nomeArqGer,valor,distancia,1);
         break;
     case 4:
         scanf("%s",nomeArqGer);
@@ -35,12 +49,32 @@ int main(){
         if(aux.distancia < 0){
             printf("Registro inexistente.");
         }else{
-            printaRegistro(aux);
+            printaRegistro(aux,RRN);
         }
         break;
     case 5:
+        scanf("%s",nomeArqGer);
+        scanf("%d",&loop_fun_5);
+        while (loop_fun_5!=0)
+        {
+            scanf("%s",nomeCampo);
+            //printf("%d",loop_fun_5);
+            //printf("%s",nomeCampo);
+            if(!strcmp(nomeCampo,"distancia")){
+                scanf("%d",&distancia);
+            }else{
+                scan_quote_string(valor);
+                //printf("%s",valor);
+            }
+            check = procuraRegistro(nomeCampo,nomeArqGer,valor,distancia,0);
+            loop_fun_5--;
+        }
+        if(check != 0 && loop_fun_5 == 0){
+            binarioNaTela1(nomeArqGer);
+        }
         break;
     case 6:
+    //preencher uma struct dados com os dados lidos do teclado e enviar para a função adiciona registro
         break;
     case 7:
         break;

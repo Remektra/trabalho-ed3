@@ -32,6 +32,42 @@ void binarioNaTela1(char *nomeArquivoBinario) {
 	free(mb);
 	fclose(fs);
 }
+
+void scan_quote_string(char *str) {
+
+	/*
+	*	Use essa função para ler um campo string delimitado entre aspas (").
+	*	Chame ela na hora que for ler tal campo. Por exemplo:
+	*
+	*	A entrada está da seguinte forma:
+	*		nomeDoCampo "MARIA DA SILVA"
+	*
+	*	Para ler isso para as strings já alocadas str1 e str2 do seu programa, você faz:
+	*		scanf("%s", str1); // Vai salvar nomeDoCampo em str1
+	*		scan_quote_string(str2); // Vai salvar MARIA DA SILVA em str2 (sem as aspas)
+	*
+	*/
+
+	char R;
+
+	while((R = getchar()) != EOF && isspace(R)); // ignorar espaços, \r, \n...
+
+	if(R == 'N' || R == 'n') { // campo NULO
+		getchar(); getchar(); getchar(); // ignorar o "ULO" de NULO.
+		strcpy(str, ""); // copia string vazia
+	} else if(R == '\"') {
+		if(scanf("%[^\"]", str) != 1) { // ler até o fechamento das aspas
+			strcpy(str, "");
+		}
+		getchar(); // ignorar aspas fechando
+	} else if(R != EOF){ // vc tá tentando ler uma string que não tá entre aspas! Fazer leitura normal %s então...
+		str[0] = R;
+		scanf("%s", &str[1]);
+	} else { // EOF
+		strcpy(str, "");
+	}
+}
+
 void lerAtePipe(char *campo,FILE *file){
     char c;
     int contador = 0;
@@ -171,6 +207,9 @@ int print_reg(char* nome_arq){
 
     fseek(file,5,SEEK_SET);
     fread(&numeroReg,4,1,file);
+    if(numeroReg == 0){
+        printf("Registro inexistente.");
+    }
 
     fseek(file, (rrn*TAMREGISTRO)+19, SEEK_SET);//Pular o cabeçalho
     while(contador < numeroReg){
@@ -178,14 +217,18 @@ int print_reg(char* nome_arq){
         fread(registro.estadoOrigem,2,1,file);
         fread(registro.estadoDestino,2,1,file);
         fread(&registro.distancia,4,1,file);
+
         //Campos de tamanhoVariavel ------>Ler ate o delimitador char a char
         lerAtePipe(registro.cidadeOrigem,file);
         lerAtePipe(registro.cidadeDestino,file);
         lerAtePipe(registro.tempoViagem,file);
         rrn++;
-        contador++;
         fseek(file,(rrn*TAMREGISTRO)+19,SEEK_SET);
-        printf("%d %s %s %d %s %s %s \n",contador-1,registro.estadoOrigem,registro.estadoDestino,registro.distancia,registro.cidadeOrigem,registro.cidadeDestino,registro.tempoViagem);
+        if(registro.estadoOrigem[0] != '*'){//so imprime se o campo nao estiver apagado e so conta como aresta se o registro nao estiver apagado
+            printf("%d %s %s %d %s %s %s \n",contador,registro.estadoOrigem,registro.estadoDestino,registro.distancia,registro.cidadeOrigem,registro.cidadeDestino,registro.tempoViagem);
+            contador++;
+        }
+        
     }
     return 1;
 }
@@ -259,6 +302,160 @@ struct Dados buscaPorRRN(char *nomeArquivo,int RRN){
     fclose(file);
     return resultado;
 }
-void printaRegistro(struct Dados r){
-    printf("%s %s %d %s %s %s",r.estadoOrigem,r.estadoDestino,r.distancia,r.cidadeOrigem,r.cidadeDestino,r.tempoViagem);
+void printaRegistro(struct Dados r, int RRN){
+    printf("%d %s %s %d %s %s %s",RRN,r.estadoOrigem,r.estadoDestino,r.distancia,r.cidadeOrigem,r.cidadeDestino,r.tempoViagem);
 }
+struct Cabecalho leCabecalho(FILE *file){
+    struct Cabecalho r;
+    r.dataUltimaCompactacao[10] = '\0';
+    rewind(file);
+    fread(&r.status,1,1,file);
+    fread(&r.numeroVertices,4,1,file);
+    fread(&r.numeroArestas,4,1,file);
+    fread(&r.dataUltimaCompactacao,10,1,file);
+    rewind(file);
+    return r;
+}
+int procuraRegistro(char *campo,char *nomeArq,char *valor, int dist,int opr){
+    FILE *file;
+    struct Cabecalho c;
+    struct Dados reg;
+    char letra;
+    file = fopen(nomeArq,"rb+");
+    if(!file){
+        printf("Falha no processamento do arquivo.");
+        return ERRO;
+    }
+    c = leCabecalho(file);
+    char status = '0';
+    char remover = '*';
+    int RRN = 0;
+    char verifica;
+    if(c.status == '0'){
+        printf("Falha no processamento do arquivo.");
+        return ERRO;
+    }
+    fwrite(&status,1,1,file);
+    fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
+    int contador = 0;
+    while(contador < c.numeroArestas){
+        fread(&verifica,1,1,file);
+        if(verifica == '*'){
+            RRN++;
+            fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
+            continue;
+        }
+        fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);//voltar para o começo do registro 
+        fread(reg.estadoOrigem,2,1,file);
+        fread(reg.estadoDestino,2,1,file);
+        fread(&reg.distancia,4,1,file);
+        lerAtePipe(reg.cidadeOrigem,file);
+        lerAtePipe(reg.cidadeDestino,file);
+        lerAtePipe(reg.tempoViagem,file);
+        if(!strcmp(campo,"estadoOrigem")){
+            if(!strcmp(reg.estadoOrigem,valor)){
+                if(opr == 1){
+                    printf("%d %s %s %d %s %s %s \n",RRN,reg.estadoOrigem, reg.estadoDestino,reg.distancia,reg.cidadeOrigem,reg.cidadeDestino,reg.tempoViagem);
+                }else{
+                    fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
+                    fwrite(&remover,1,1,file);
+                    c.numeroArestas--;  
+                }
+            }
+        }else if(!strcmp(campo,"estadoDestino")){  
+            if(!strcmp(reg.estadoDestino,valor)){  
+                if(opr == 1){
+                    printf("%d %s %s %d %s %s %s \n",RRN,reg.estadoOrigem, reg.estadoDestino,reg.distancia,reg.cidadeOrigem,reg.cidadeDestino,reg.tempoViagem);
+                }else{
+                    fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
+                    fwrite(&remover,1,1,file);
+                    c.numeroArestas--;  
+                }
+            }
+        }else if(!strcmp(campo,"distancia")){
+            if(reg.distancia == dist){
+                if(opr == 1){
+                    printf("%d %s %s %d %s %s %s \n",RRN,reg.estadoOrigem, reg.estadoDestino,reg.distancia,reg.cidadeOrigem,reg.cidadeDestino,reg.tempoViagem);
+                }else{
+                    fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
+                    fwrite(&remover,1,1,file);
+                    c.numeroArestas--;  
+                }
+            }
+        }else if (!strcmp(campo,"cidadeOrigem")){
+            if(!strcmp(reg.cidadeOrigem,valor)){
+                if(opr == 1){
+                    printf("%s %s %d %s %s %s \n",reg.estadoOrigem, reg.estadoDestino,reg.distancia,reg.cidadeOrigem,reg.cidadeDestino,reg.tempoViagem);
+                }else{
+                    fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
+                    fwrite(&remover,1,1,file);
+                    c.numeroArestas--;  
+                }
+            }
+        }else if (!strcmp(campo,"cidadeDestino")){
+            if(!strcmp(reg.cidadeDestino,valor)){
+                if(opr == 1){
+                    printf("%s %s %d %s %s %s \n",reg.estadoOrigem, reg.estadoDestino,reg.distancia,reg.cidadeOrigem,reg.cidadeDestino,reg.tempoViagem);
+                }else{
+                    fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
+                    fwrite(&remover,1,1,file);
+                    c.numeroArestas--;  
+                }
+            }
+        }else if (!strcmp(campo,"tempoViagem")){
+            if(!strcmp(reg.tempoViagem,valor)){
+                if(opr == 1){
+                    printf("%s %s %d %s %s %s \n",reg.estadoOrigem, reg.estadoDestino,reg.distancia,reg.cidadeOrigem,reg.cidadeDestino,reg.tempoViagem);
+                }else{
+                    fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
+                    fwrite(&remover,1,1,file);
+                    c.numeroArestas--;  
+                }
+            }
+        }else{
+            return ERRO;
+        }
+        
+        RRN++;
+        contador++;
+    }
+    rewind(file);
+    c.status = '1';
+    fwrite(&c.status,1,1,file);
+    fwrite(&c.numeroVertices,4,1,file);
+    fwrite(&c.numeroArestas,4,1,file);
+    fwrite(&c.dataUltimaCompactacao,1,1,file);
+    fclose(file);
+    return 1;
+}
+int adicionaRegistro(struct Dados dado,char *nomeArq){
+    FILE *file;
+    file = fopen(nomeArq,"wb");
+    char abriu = '0';
+    char fechou = '1';
+    char delimitador = '|';
+    int a,b,c;
+
+    fwrite(&abriu,1,1,file);
+    fseek(file,0,SEEK_END);
+    fwrite(dado.estadoOrigem,2,1,file);//escreve os dois primeiros bytes de dado.estado origem arquivo binario
+    fwrite(dado.estadoDestino,2,1,file);
+    fwrite(&dado.distancia,sizeof(int),1,file);
+    a = strlen(dado.cidadeOrigem);
+    b = strlen(dado.cidadeDestino);
+    c = strlen(dado.tempoViagem);
+    fwrite(dado.cidadeOrigem,a,1,file);
+    fwrite(&delimitador,1,1,file);
+    fwrite(dado.cidadeDestino,b,1,file);
+    fwrite(&delimitador,1,1,file);
+    fwrite(dado.tempoViagem,c,1,file);
+    fwrite(&delimitador,1,1,file);
+    fseek(file,0,SEEK_SET);
+    fwrite(&fechou,1,1,file);
+    fclose(file);
+}
+/*To do List
+
+    1 - Deixar o codigo mais MODULARIZADO ao criar a funções ler 1 registro(retorna struct Dados e recebe o ponteiro do arquivo somente)
+    2 -  '' '' ''' ao criar a função insere um registro que recebe uma struct dados e o ponteiro pro arquivo(ou o ponteiro para o ponteiro se for dar problema)
+*/

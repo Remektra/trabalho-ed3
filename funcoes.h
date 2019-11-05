@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #define ERRO 0
 #define OK   1
@@ -42,4 +43,10 @@ void lerAtePipe(char*,FILE*); // Função responsável por ler ate o delimitador
 int print_reg(char*); // Função responsável por ler e exibir todos os registros presentes no arquivo binário 
 void printaCabecalho();//Apenas para testes
 struct Dados buscaPorRRN(char *nomeArquivo,int RRN);//retorna o registro ou distancia negativa se nao foi encontrado
-void printaRegistro(struct Dados registro);
+void printaRegistro(struct Dados registro,int RRN);
+struct Cabecalho leCabecalho(FILE *file);
+//Procura todos os registros que satisfazem um criterio de busca e os imprime ou os exclui dependendo do parametro opr
+//se opr == 1 imprime senao apaga(coloca *)
+int procuraRegistro(char *campo,char *nomeArq,char *valor, int dist,int opr);
+int adicionaRegistro(struct Dados dados,char *nomeArq);//
+void scan_quote_string(char *str);
