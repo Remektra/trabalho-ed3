@@ -82,13 +82,14 @@ void lerAtePipe(char *campo,FILE *file){
 }
 
 int CsvtoBin(char* nome_arq_csv,char* nomeArqGe, struct NoCidades **inicio){
+    // Ponteiros para os arquivos
     FILE* csv;
     FILE* bin;
     csv = fopen(nome_arq_csv,"rb"); // abre o arquivo csv
-    bin = fopen(nomeArqGe,"wb"); // cria o arquivo binário 
+    bin = fopen(nomeArqGe,"wb"); // cria o arquivo binário
     if(!csv){
         printf("Falha no carregamento do arquivo.");
-        return ERRO; // caso tenha ocorrido algum erro com o arquivo, retorna 0 
+        return ERRO; // caso tenha ocorrido algum erro com o arquivo, retorna 0
     }
     if(!bin){
         printf("Falha no carregamento do arquivo.");
@@ -97,11 +98,11 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe, struct NoCidades **inicio){
     struct Cabecalho cabecalho;
     struct Dados dado;
     //Dados para criar o cabecalho
-    strcpy(cabecalho.dataUltimaCompactacao,"##/##/####");   
+    strcpy(cabecalho.dataUltimaCompactacao,"##########");
     cabecalho.numeroArestas = 0;
     cabecalho.numeroVertices = 0;
     cabecalho.status = '0';
-  
+
     fwrite(&cabecalho.status,1,1,bin);
     fwrite(&cabecalho.numeroVertices,sizeof(int),1,bin);//OBS sizeof(int) é de 4bits por padrao do GCC
     fwrite(&cabecalho.numeroArestas,sizeof(int),1,bin);
@@ -118,10 +119,10 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe, struct NoCidades **inicio){
     dado.estadoDestino[0] = dado.estadoOrigem[0] = dado.cidadeDestino[0] = dado.cidadeOrigem[0] = dado.tempoViagem[0] = '\0';
     //tratar a primeira linha
     fscanf(csv,"%[^\n]%*c",limpalinha);
-    
-    while(!feof(csv)){
+
+    while(fscanf(csv,"%[^,]%*c %[^,]%*c %d%*c %[^,]%*c %[^,]%*c",dado.estadoOrigem,dado.estadoDestino,&dado.distancia,dado.cidadeOrigem,dado.cidadeDestino) != EOF){
         cntaux = 0;
-        fscanf(csv,"%[^,]%*c %[^,]%*c %d%*c %[^,]%*c %[^,]%*c",dado.estadoOrigem,dado.estadoDestino,&dado.distancia,dado.cidadeOrigem,dado.cidadeDestino);
+        //fscanf(csv,"%[^,]%*c %[^,]%*c %d%*c %[^,]%*c %[^,]%*c",dado.estadoOrigem,dado.estadoDestino,&dado.distancia,dado.cidadeOrigem,dado.cidadeDestino);
         fscanf(csv,"%c",&aux);
         if(aux == '\n'){
             dado.tempoViagem[0] = '\0';
@@ -137,18 +138,18 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe, struct NoCidades **inicio){
             dado.estadoDestino[1] = '#';
         }
         if(dado.estadoOrigem[0]== '\0'){
-            dado.estadoOrigem[1] = '#';  
+            dado.estadoOrigem[1] = '#';
         }
         //escrita dos campos de tamanho fixo
         fwrite(dado.estadoOrigem,2,1,bin);//escreve os dois primeiros bytes de dado.estado origem arquivo binario
         fwrite(dado.estadoDestino,2,1,bin);
         fwrite(&dado.distancia,sizeof(int),1,bin);
-        
+
         //campos de tamanho varaivel
 
-        /*Não se realizou o tratamento de truncamento pq na especificação do trabalho foi 
+        /*Não se realizou o tratamento de truncamento pq na especificação do trabalho foi
           dito que não era necessário pois o arquivo de dados garantia regularidade */
-        
+
         a = strlen(dado.cidadeOrigem);
         b = strlen(dado.cidadeDestino);
         c = strlen(dado.tempoViagem);
@@ -163,7 +164,6 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe, struct NoCidades **inicio){
         }
         if(!buscaCidade(dado.cidadeOrigem,*inicio)){
             cabecalho.numeroVertices = insereCidade(dado.cidadeOrigem,inicio);
-            printf("%d",cabecalho.numeroVertices);
         }
         if(!buscaCidade(dado.cidadeDestino,*inicio)){
             cabecalho.numeroVertices = insereCidade(dado.cidadeDestino,inicio);
@@ -173,15 +173,12 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe, struct NoCidades **inicio){
     /*Atualizar o Cabecalho*/
     fseek(bin,0,SEEK_SET);
     cabecalho.status = '1';
-    fwrite(&cabecalho.status,1,1,bin);
-    fwrite(&cabecalho.numeroVertices,sizeof(int),1,bin);
-    fwrite(&cabecalho.numeroArestas,sizeof(int),1,bin);
-    fwrite(cabecalho.dataUltimaCompactacao,10,1,bin);
+    escreveCabecalho(cabecalho,bin);
     fclose(bin);
     fclose(csv);
-    return 0;
     binarioNaTela1(nomeArqGe);
-    
+    return 0;
+
 }
 
 int print_reg(char* nome_arq){
@@ -189,7 +186,7 @@ int print_reg(char* nome_arq){
     file = fopen(nome_arq,"rb"); // abre o arquivo gerado para leitura
     if(!file){
         printf("Falha no processamento do arquivo.");
-        return ERRO; // caso tenha ocorrido algum erro com o arquivo, retorna 0 
+        return ERRO; // caso tenha ocorrido algum erro com o arquivo, retorna 0
     }
     char letra;
     fread(&letra,1,1,file);
@@ -198,8 +195,6 @@ int print_reg(char* nome_arq){
         return ERRO;
     }
     struct Dados registro;
-    struct Cabecalho cab;
-    char c;
     int contador = 0;
     int rrn = 0;
     fseek(file,5,SEEK_SET);
@@ -212,24 +207,18 @@ int print_reg(char* nome_arq){
     }
 
     fseek(file, (rrn*TAMREGISTRO)+19, SEEK_SET);//Pular o cabeçalho
+    registro.estadoOrigem[2] = registro.estadoDestino[2] = '\0';
     while(contador < numeroReg){
-        registro.estadoOrigem[2] = registro.estadoDestino[2] = '\0';
-        fread(registro.estadoOrigem,2,1,file);
-        fread(registro.estadoDestino,2,1,file);
-        fread(&registro.distancia,4,1,file);
-
-        //Campos de tamanhoVariavel ------>Ler ate o delimitador char a char
-        lerAtePipe(registro.cidadeOrigem,file);
-        lerAtePipe(registro.cidadeDestino,file);
-        lerAtePipe(registro.tempoViagem,file);
+        lerRegistro(file,&registro);
         rrn++;
         fseek(file,(rrn*TAMREGISTRO)+19,SEEK_SET);
         if(registro.estadoOrigem[0] != '*'){//so imprime se o campo nao estiver apagado e so conta como aresta se o registro nao estiver apagado
             printf("%d %s %s %d %s %s %s \n",contador,registro.estadoOrigem,registro.estadoDestino,registro.distancia,registro.cidadeOrigem,registro.cidadeDestino,registro.tempoViagem);
             contador++;
         }
-        
+
     }
+    fclose(file);
     return 1;
 }
 int buscaCidade(char *cidade,struct NoCidades *inicio){
@@ -243,20 +232,20 @@ int buscaCidade(char *cidade,struct NoCidades *inicio){
         inicio = inicio->prox;
     }
     return 0;
-    
+
 }
 int insereCidade(char *cidade,struct NoCidades **inicio){
     struct NoCidades *aux = *(inicio);
     struct NoCidades *elem = calloc(1,sizeof(struct NoCidades));
     int contador = 2;
     strcpy(elem->cidade,cidade);
-    elem->prox == NULL;
+    // elem->prox == NULL; warning tirar
     if(cidade == NULL){
         return 0;
     }
     if(aux == NULL){
        *inicio = elem;
-       return 1; 
+       return 1;
     }
     while(aux->prox != NULL){
         aux = aux->prox;
@@ -265,7 +254,7 @@ int insereCidade(char *cidade,struct NoCidades **inicio){
     aux->prox = elem;
     return contador;
 }
-void printaCabecalho(){
+/*void printaCabecalho(){
     FILE *file = fopen("arquivoGerado.bin","rb");
     char a;
     int b;
@@ -278,7 +267,7 @@ void printaCabecalho(){
     d[10] = '\0';
     printf("\n %c %d %d %s \n",a,b,c,d);
     fclose(file);
-}
+}*/
 struct Dados buscaPorRRN(char *nomeArquivo,int RRN){
     FILE *file;
     int numreg;
@@ -320,7 +309,8 @@ int procuraRegistro(char *campo,char *nomeArq,char *valor, int dist,int opr){
     FILE *file;
     struct Cabecalho c;
     struct Dados reg;
-    char letra;
+    reg.estadoDestino[2] = reg.estadoOrigem[2] = '\0';
+    //char letra; warning tirar
     file = fopen(nomeArq,"rb+");
     if(!file){
         printf("Falha no processamento do arquivo.");
@@ -338,14 +328,15 @@ int procuraRegistro(char *campo,char *nomeArq,char *valor, int dist,int opr){
     fwrite(&status,1,1,file);
     fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
     int contador = 0;
-    while(contador < c.numeroArestas){
+    int limite = c.numeroArestas;
+    while(contador < limite){
         fread(&verifica,1,1,file);
         if(verifica == '*'){
             RRN++;
             fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
             continue;
         }
-        fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);//voltar para o começo do registro 
+        fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);//voltar para o começo do registro
         fread(reg.estadoOrigem,2,1,file);
         fread(reg.estadoDestino,2,1,file);
         fread(&reg.distancia,4,1,file);
@@ -359,17 +350,17 @@ int procuraRegistro(char *campo,char *nomeArq,char *valor, int dist,int opr){
                 }else{
                     fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
                     fwrite(&remover,1,1,file);
-                    c.numeroArestas--;  
+                    c.numeroArestas--;
                 }
             }
-        }else if(!strcmp(campo,"estadoDestino")){  
-            if(!strcmp(reg.estadoDestino,valor)){  
+        }else if(!strcmp(campo,"estadoDestino")){
+            if(!strcmp(reg.estadoDestino,valor)){
                 if(opr == 1){
                     printf("%d %s %s %d %s %s %s \n",RRN,reg.estadoOrigem, reg.estadoDestino,reg.distancia,reg.cidadeOrigem,reg.cidadeDestino,reg.tempoViagem);
                 }else{
                     fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
                     fwrite(&remover,1,1,file);
-                    c.numeroArestas--;  
+                    c.numeroArestas--;
                 }
             }
         }else if(!strcmp(campo,"distancia")){
@@ -379,7 +370,7 @@ int procuraRegistro(char *campo,char *nomeArq,char *valor, int dist,int opr){
                 }else{
                     fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
                     fwrite(&remover,1,1,file);
-                    c.numeroArestas--;  
+                    c.numeroArestas--;
                 }
             }
         }else if (!strcmp(campo,"cidadeOrigem")){
@@ -389,7 +380,7 @@ int procuraRegistro(char *campo,char *nomeArq,char *valor, int dist,int opr){
                 }else{
                     fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
                     fwrite(&remover,1,1,file);
-                    c.numeroArestas--;  
+                    c.numeroArestas--;
                 }
             }
         }else if (!strcmp(campo,"cidadeDestino")){
@@ -399,7 +390,7 @@ int procuraRegistro(char *campo,char *nomeArq,char *valor, int dist,int opr){
                 }else{
                     fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
                     fwrite(&remover,1,1,file);
-                    c.numeroArestas--;  
+                    c.numeroArestas--;
                 }
             }
         }else if (!strcmp(campo,"tempoViagem")){
@@ -409,14 +400,14 @@ int procuraRegistro(char *campo,char *nomeArq,char *valor, int dist,int opr){
                 }else{
                     fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
                     fwrite(&remover,1,1,file);
-                    c.numeroArestas--;  
+                    c.numeroArestas--;
                 }
             }
         }else{
             return ERRO;
         }
-        
         RRN++;
+        fseek(file,(RRN*TAMREGISTRO)+19,SEEK_SET);
         contador++;
     }
     rewind(file);
@@ -430,18 +421,127 @@ int procuraRegistro(char *campo,char *nomeArq,char *valor, int dist,int opr){
 }
 int adicionaRegistro(struct Dados dado,char *nomeArq){
     FILE *file;
-    file = fopen(nomeArq,"wb");
+    file = fopen(nomeArq,"rb+");
     if(!file){
         printf("Falha no processamento do arquivo.");
         return ERRO;
     }
+    struct Cabecalho cab;
+    cab = leCabecalho(file);
+    if(cab.status == '0'){
+        printf("Falha no processamento do arquivo.");
+        return ERRO;
+    }
     char abriu = '0';
-    char fechou = '1';
-    char delimitador = '|';
-    int a,b,c;
-
+    //char delimitador = '|';
+    //char lixo = '#'; warning tirar
+    //int a,b,c; warning tirar
     fwrite(&abriu,1,1,file);
     fseek(file,0,SEEK_END);
+    insereRegistroBin(dado,file,0);
+    fseek(file,0,SEEK_SET);
+    cab.numeroArestas++;
+    cab.status = '1';
+    escreveCabecalho(cab,file);
+    fseek(file,5,SEEK_SET);
+    fclose(file);
+    return 1;
+}
+int atualizaArestas(char *nomeArq, struct NoCidades **inicio){
+    struct Cabecalho c;
+    c.status = '0';
+    FILE *file;
+    file = fopen(nomeArq,"rb+");
+    c = leCabecalho(file);
+    //verificar status
+    fwrite(&c.status,1,1,file);
+    int RRN = 0;
+    int contador = 0;
+    struct Dados registro;
+    registro.estadoOrigem[2] = registro.estadoDestino[2] = '\0';
+    fseek(file,(contador*TAMREGISTRO)+19,SEEK_SET);
+    while(RRN < c.numeroArestas){
+        contador++;
+        lerRegistro(file,&registro);
+        fseek(file,(contador*TAMREGISTRO)+19,SEEK_SET);
+        if(registro.estadoOrigem[0] == '*'){;
+            continue;
+        }
+        if(!buscaCidade(registro.cidadeOrigem,*inicio)){
+            c.numeroVertices = insereCidade(registro.cidadeOrigem,inicio);
+        }
+        if(!buscaCidade(registro.cidadeDestino,*inicio)){
+            c.numeroVertices = insereCidade(registro.cidadeDestino,inicio);
+        }
+        RRN++;
+    }
+    fseek(file,0,SEEK_SET);
+    c.status = '1';
+    escreveCabecalho(c,file);
+    fclose(file);
+    return 0;
+}
+int attRegistroPorRRN(char *nomeArq,int rrn,char *campo, char *valor,int distancia){
+    FILE *file;
+    file = fopen(nomeArq,"rb+");
+    if(!file){
+        printf("Falha no processamento do arquivo.");
+        return ERRO;
+    }
+    //int a,b,c; warning tirar
+    struct Cabecalho ca;
+    ca = leCabecalho(file);
+    if(ca.status == '0'){
+        printf("Falha no processamento do arquivo.");
+        return ERRO;
+    }
+    if(rrn > ca.numeroArestas-1){
+        return 1;
+    }
+    ca.status = '0';
+    fwrite(&ca.status,1,1,file);
+    struct Dados reg;
+    reg.estadoOrigem[2] = reg.estadoDestino[2] = '\0';
+    fseek(file,(rrn*TAMREGISTRO)+19,SEEK_SET);
+    lerRegistro(file,&reg);
+    fseek(file,(rrn*TAMREGISTRO)+19,SEEK_SET);
+    if(!strcmp(campo,"estadoOrigem")){
+        strcpy(reg.estadoOrigem,valor);
+    }else if(!strcmp(campo,"estadoDestino")){
+        strcpy(reg.estadoDestino,valor);
+    }else if(!strcmp(campo,"distancia")){
+        reg.distancia = distancia;
+    }else if (!strcmp(campo,"cidadeOrigem")){
+        strcpy(reg.cidadeOrigem,valor);
+    }else if (!strcmp(campo,"cidadeDestino")){
+        strcpy(reg.cidadeDestino,valor);
+    }else if (!strcmp(campo,"tempoViagem")){
+        strcpy(reg.tempoViagem,valor);
+    }else{
+        return ERRO;
+    }
+    insereRegistroBin(reg,file,1);
+    fseek(file,0,SEEK_SET);
+    ca.status = '1';
+    fwrite(&ca.status,1,1,file);
+    fclose(file);
+    return 1;
+}
+void lerRegistro(FILE *file,struct Dados *r){
+    struct Dados registro;
+    fread(registro.estadoOrigem,2,1,file);
+    fread(registro.estadoDestino,2,1,file);
+    fread(&registro.distancia,4,1,file);
+        //Campos de tamanhoVariavel ------>Ler ate o delimitador char a char
+    lerAtePipe(registro.cidadeOrigem,file);
+    lerAtePipe(registro.cidadeDestino,file);
+    lerAtePipe(registro.tempoViagem,file);
+    *r = registro;
+}
+void insereRegistroBin(struct Dados dado,FILE *file,int update){
+    int a,b,c;
+    char lixo = '#';
+    char delimitador = '|';
     fwrite(dado.estadoOrigem,2,1,file);//escreve os dois primeiros bytes de dado.estado origem arquivo binario
     fwrite(dado.estadoDestino,2,1,file);
     fwrite(&dado.distancia,sizeof(int),1,file);
@@ -454,13 +554,69 @@ int adicionaRegistro(struct Dados dado,char *nomeArq){
     fwrite(&delimitador,1,1,file);
     fwrite(dado.tempoViagem,c,1,file);
     fwrite(&delimitador,1,1,file);
-    fseek(file,0,SEEK_SET);
-    fwrite(&fechou,1,1,file);
+    if(update == 0){
+        for(int i = 0; i < 77 - (a+b+c+3);i++){//escreve lixo no resto dos espaços livres
+            fwrite(&lixo,1,1,file);
+        }
+    }
+}
+int comprimirArquivo(char *nomeArq,char *Comprimido){
+    FILE *file = fopen(nomeArq,"rb");
+    FILE *filecomp = fopen(Comprimido,"wb");
+    int rrn = 0;
+    int contador = 0;
+    struct Dados aux;
+    if(!file){
+        printf("Falha no carregamento do arquivo.");
+        return ERRO;
+    }
+    struct Cabecalho c;
+    c = leCabecalho(file);
+    if(c.status == '0'){
+        printf("Falha no carregamento do arquivo.");
+        return ERRO;
+    }
+    c.status = '1';
+    strcpy(c.dataUltimaCompactacao,"01/11/2019");
+    escreveCabecalho(c,filecomp);
+    fseek(file,(rrn*TAMREGISTRO)+19,SEEK_SET);
+    while(rrn < c.numeroArestas){
+        lerRegistro(file,&aux);
+        if(aux.estadoOrigem[0] != '*'){
+            insereRegistroBin(aux,filecomp,0);
+            rrn++;
+        }
+        contador++;
+        fseek(file,(contador*TAMREGISTRO)+19,SEEK_SET);
+    }
+    fseek(filecomp,0,SEEK_SET);
+    c.status ='1';
+    fwrite(&c.status,1,1,filecomp);
     fclose(file);
+    fclose(filecomp);
     return 1;
 }
+void escreveCabecalho(struct Cabecalho c,FILE *file){
+    fwrite(&c.status,1,1,file);
+    fwrite(&c.numeroVertices,sizeof(int),1,file);//OBS sizeof(int) é de 4bits por padrao do GCC
+    fwrite(&c.numeroArestas,sizeof(int),1,file);
+    fwrite(c.dataUltimaCompactacao,10,1,file);
+}
+/*void freeCidades(struct NoCidades *inicio){
+    if(inicio == NULL){
+        return;
+    }
+    struct NoCidades *aux;
+    while (inicio != NULL){
+        aux = inicio;
+        free(inicio);
+        inicio = aux;
+    }
+
+}*/
 /*To do List
 
     1 - Deixar o codigo mais MODULARIZADO ao criar a funções ler 1 registro(retorna struct Dados e recebe o ponteiro do arquivo somente)
     2 -  '' '' ''' ao criar a função insere um registro que recebe uma struct dados e o ponteiro pro arquivo(ou o ponteiro para o ponteiro se for dar problema)
+    3-o mesmo para salvar o cabecalho
 */
