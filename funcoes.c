@@ -3,8 +3,7 @@
 
 #include "funcoes.h"
 
-//contar caracteres ate o \0
-//Ler dados do arquivo CSV e salvar no arquivo binário
+
 void binarioNaTela1(char *nomeArquivoBinario) {
 
 	/* Use essa função para comparação no run.codes. Lembre-se de ter fechado (fclose) o arquivo anteriormente.
@@ -117,12 +116,10 @@ int CsvtoBin(char* nome_arq_csv,char* nomeArqGe, struct NoCidades **inicio){
     int cntaux;
     dado.distancia = -1;//Esta linha e a de baixo servem para tratar os casos onde a leitura seja nula ja que iniciamos o campo com um valor conhecido
     dado.estadoDestino[0] = dado.estadoOrigem[0] = dado.cidadeDestino[0] = dado.cidadeOrigem[0] = dado.tempoViagem[0] = '\0';
-    //tratar a primeira linha
     fscanf(csv,"%[^\n]%*c",limpalinha);
 
     while(fscanf(csv,"%[^,]%*c %[^,]%*c %d%*c %[^,]%*c %[^,]%*c",dado.estadoOrigem,dado.estadoDestino,&dado.distancia,dado.cidadeOrigem,dado.cidadeDestino) != EOF){
         cntaux = 0;
-        //fscanf(csv,"%[^,]%*c %[^,]%*c %d%*c %[^,]%*c %[^,]%*c",dado.estadoOrigem,dado.estadoDestino,&dado.distancia,dado.cidadeOrigem,dado.cidadeDestino);
         fscanf(csv,"%c",&aux);
         if(aux == '\n'){
             dado.tempoViagem[0] = '\0';
@@ -239,7 +236,6 @@ int insereCidade(char *cidade,struct NoCidades **inicio){
     struct NoCidades *elem = calloc(1,sizeof(struct NoCidades));
     int contador = 2;
     strcpy(elem->cidade,cidade);
-    // elem->prox == NULL; warning tirar
     if(cidade == NULL){
         return 0;
     }
@@ -254,20 +250,6 @@ int insereCidade(char *cidade,struct NoCidades **inicio){
     aux->prox = elem;
     return contador;
 }
-/*void printaCabecalho(){
-    FILE *file = fopen("arquivoGerado.bin","rb");
-    char a;
-    int b;
-    int c;
-    char d[11];
-    fread(&a,1,1,file);
-    fread(&b,4,1,file);
-    fread(&c,4,1,file);
-    fread(&d,10,1,file);
-    d[10] = '\0';
-    printf("\n %c %d %d %s \n",a,b,c,d);
-    fclose(file);
-}*/
 struct Dados buscaPorRRN(char *nomeArquivo,int RRN){
     FILE *file;
     int numreg;
@@ -297,7 +279,7 @@ void printaRegistro(struct Dados r, int RRN){
 struct Cabecalho leCabecalho(FILE *file){
     struct Cabecalho r;
     r.dataUltimaCompactacao[10] = '\0';
-    rewind(file);
+    rewind(file); // volta a posicao do cursor para o começo do arquivo
     fread(&r.status,1,1,file);
     fread(&r.numeroVertices,4,1,file);
     fread(&r.numeroArestas,4,1,file);
@@ -310,7 +292,6 @@ int procuraRegistro(char *campo,char *nomeArq,char *valor, int dist,int opr){
     struct Cabecalho c;
     struct Dados reg;
     reg.estadoDestino[2] = reg.estadoOrigem[2] = '\0';
-    //char letra; warning tirar
     file = fopen(nomeArq,"rb+");
     if(!file){
         printf("Falha no processamento do arquivo.");
@@ -433,9 +414,6 @@ int adicionaRegistro(struct Dados dado,char *nomeArq){
         return ERRO;
     }
     char abriu = '0';
-    //char delimitador = '|';
-    //char lixo = '#'; warning tirar
-    //int a,b,c; warning tirar
     fwrite(&abriu,1,1,file);
     fseek(file,0,SEEK_END);
     insereRegistroBin(dado,file,0);
@@ -488,7 +466,6 @@ int attRegistroPorRRN(char *nomeArq,int rrn,char *campo, char *valor,int distanc
         printf("Falha no processamento do arquivo.");
         return ERRO;
     }
-    //int a,b,c; warning tirar
     struct Cabecalho ca;
     ca = leCabecalho(file);
     if(ca.status == '0'){
@@ -532,7 +509,7 @@ void lerRegistro(FILE *file,struct Dados *r){
     fread(registro.estadoOrigem,2,1,file);
     fread(registro.estadoDestino,2,1,file);
     fread(&registro.distancia,4,1,file);
-        //Campos de tamanhoVariavel ------>Ler ate o delimitador char a char
+    //Campos de tamanhoVariavel ------>Ler ate o delimitador char a char
     lerAtePipe(registro.cidadeOrigem,file);
     lerAtePipe(registro.cidadeDestino,file);
     lerAtePipe(registro.tempoViagem,file);
@@ -602,21 +579,3 @@ void escreveCabecalho(struct Cabecalho c,FILE *file){
     fwrite(&c.numeroArestas,sizeof(int),1,file);
     fwrite(c.dataUltimaCompactacao,10,1,file);
 }
-/*void freeCidades(struct NoCidades *inicio){
-    if(inicio == NULL){
-        return;
-    }
-    struct NoCidades *aux;
-    while (inicio != NULL){
-        aux = inicio;
-        free(inicio);
-        inicio = aux;
-    }
-
-}*/
-/*To do List
-
-    1 - Deixar o codigo mais MODULARIZADO ao criar a funções ler 1 registro(retorna struct Dados e recebe o ponteiro do arquivo somente)
-    2 -  '' '' ''' ao criar a função insere um registro que recebe uma struct dados e o ponteiro pro arquivo(ou o ponteiro para o ponteiro se for dar problema)
-    3-o mesmo para salvar o cabecalho
-*/

@@ -7,20 +7,17 @@
 #include "funcoes.h"
 
 int main(){
-    struct NoCidades *inicio = NULL;
-    struct Dados aux;
-    int opt;
-    char nomeArqGer[50];
-    char nomeCampo[50] = "";
-    char valor[50] = "";
+    struct NoCidades *inicio = NULL; // Inicia o ponteiro para a lista das cidades como NULL.
+    struct Dados aux; // Uma struct auxiliar de dados do arquivo que usaremos em algumas funções.
+    int opt; // Opção do switch case.
+    char nomeArqGer[50]; // Char para obter o nome do arquivo que deseja gerar.
+    char nomeCampo[50] = ""; // Char para obter o nome do campo do registro em algumas funções.
+    char valor[50] = ""; // Char para obter um valor, usaremos em algumas funções. 
     int distancia = -1;
-    int loop_fun_5 = 0;
-    int loop_fun_6 = 0;
-    int loop_fun_7 = 0;
-    int check5 = 1;
-    int check6 = 1;
-    char nome_arq_csv[50];
-    int RRN;
+    int loop_fun = 0; // loop para algumas funções que foi solocitado para executação N vezes.
+    int check = 1; // variavel para verificar a situação de alguns casos. (0,1)
+    char nome_arq_csv[50]; // Char que recebe o nome do arquivo CSV no run,codes.
+    int RRN; // Número relativo de registro.
     scanf("%d", &opt);  /* Digita o número da opção a ser considerada */
 
     switch (opt){
@@ -55,8 +52,8 @@ int main(){
         break;
     case 5:
         scanf("%s",nomeArqGer);
-        scanf("%d",&loop_fun_5);
-        while (loop_fun_5!=0)
+        scanf("%d",&loop_fun);
+        while (loop_fun!=0)
         {
             scanf("%s",nomeCampo);
             if(!strcmp(nomeCampo,"distancia")){
@@ -64,18 +61,18 @@ int main(){
             }else{
                 scan_quote_string(valor);
             }
-            check5 = procuraRegistro(nomeCampo,nomeArqGer,valor,distancia,0);
-            loop_fun_5--;
+            check = procuraRegistro(nomeCampo,nomeArqGer,valor,distancia,0);
+            loop_fun--;
         }
-        if(check5 != 0 && loop_fun_5 == 0){
+        if(check != 0 && loop_fun == 0){
             atualizaArestas(nomeArqGer,&inicio);
             binarioNaTela1(nomeArqGer);
         }
         break;
     case 6:
         scanf("%s",nomeArqGer);
-        scanf("%d",&loop_fun_6);
-        while (loop_fun_6!=0)
+        scanf("%d",&loop_fun);
+        while (loop_fun!=0)
         {
             scan_quote_string(aux.estadoOrigem);
             scan_quote_string(aux.estadoDestino);
@@ -85,17 +82,17 @@ int main(){
             scan_quote_string(aux.tempoViagem);
             adicionaRegistro(aux,nomeArqGer);
 
-            loop_fun_6--;
+            loop_fun--;
         }
-        if(check6 != 0 && loop_fun_6 == 0){
+        if(check != 0 && loop_fun == 0){
             atualizaArestas(nomeArqGer,&inicio);
             binarioNaTela1(nomeArqGer);
         }
         break;
     case 7:
         scanf("%s",nomeArqGer);
-        scanf("%d",&loop_fun_7);
-        for(int i = 0;i < loop_fun_7;i++){
+        scanf("%d",&loop_fun);
+        for(int i = 0;i < loop_fun;i++){
             scanf("%d",&RRN);
             scanf("%s",nomeCampo);
             if(!strcmp(nomeCampo,"distancia")){
@@ -103,12 +100,12 @@ int main(){
             }else{
                 scan_quote_string(valor);
             }
-            check6 = attRegistroPorRRN(nomeArqGer,RRN,nomeCampo,valor,distancia);
-            if(check6 == 0){
+            check = attRegistroPorRRN(nomeArqGer,RRN,nomeCampo,valor,distancia);
+            if(check == 0){
                 break;
             }
         }
-            if(check6 != 0){
+            if(check != 0){
             atualizaArestas(nomeArqGer,&inicio);
             binarioNaTela1(nomeArqGer);
             }
@@ -116,8 +113,8 @@ int main(){
     case 8:
         scanf("%s",nome_arq_csv);
         scanf("%s",nomeArqGer); 
-        check6 = comprimirArquivo(nome_arq_csv,nomeArqGer);
-        if(check6 != 0){
+        check = comprimirArquivo(nome_arq_csv,nomeArqGer);
+        if(check != 0){
             binarioNaTela1(nomeArqGer); 
         }
         break;
